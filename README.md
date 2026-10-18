@@ -23,4 +23,11 @@ Wardrobe photos and saved looks use IndexedDB. Training stores image features, l
 ## Checks
 `node tests/local-model.test.cjs`
 
-Model behavior tests and static checks passed. Browser interactions and mobile camera behavior have not been verified in this environment. Hosted publication is unavailable because the Sites source-workflow helpers are missing from this workspace.
+Model behavior tests and static checks passed. Browser interactions and mobile camera behavior have not been verified in this environment. Deployment is managed through the connected GitHub repository and Vercel project.
+
+## Discover outfit inspiration
+The Discover section contains 24 curated outfit formulas across women, men, girls, and boys, with audience/style/occasion filters, search, a saved inspiration board, and detailed clothing lists. Each formula includes a warm-weather version and layering advice. Saving a look stores its ID in this browser; it does not post to Pinterest.
+
+The source ribbon links nine fashion-related boards from Pinterest Predicts 2026. Forecast-themed formulas are Daywear's adaptations, not Pinterest endorsements or live popularity rankings. See INSPIRATION_SOURCES.md for research scope and source methodology. The original editorial style-reference image is AI-generated and hosted locally; it is not a Pinterest photograph. The gallery is not training data for the local rating model.
+
+Vercel: this repository's vercel.json serves the dist directory. Git pushes can trigger deployment when the repository is linked to the existing Daywear Vercel project. A successful GitHub push alone does not verify a production release.
