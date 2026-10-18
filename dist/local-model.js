@@ -1,0 +1,13 @@
+/* A local k-nearest-neighbor regressor. No remote inference or pretrained weights. */
+(function(root){
+'use strict';
+const DIM=96;
+function valid(row){return row&&typeof row.id==='string'&&typeof row.name==='string'&&row.name.length<=80&&Number.isFinite(row.rating)&&row.rating>=1&&row.rating<=10&&['Casual','Work','Evening','Sport'].includes(row.occasion)&&Array.isArray(row.features)&&row.features.length===DIM&&row.features.every(x=>Number.isFinite(x)&&x>=0&&x<=1)}
+function distance(a,b){return Math.sqrt(a.reduce((s,x,i)=>s+(x-b[i])**2,0)/a.length)}
+function train(rows){if(rows.length<6)throw Error('Add at least 6 different rated photos before training.');if(!rows.every(valid))throw Error('Some training examples are invalid.');if(new Set(rows.map(r=>r.rating)).size<2)throw Error('Include at least two different ratings so the model can learn a preference.');return {version:1,trainedAt:new Date().toISOString(),rows:rows.map(r=>({...r,features:[...r.features]}))}}
+function predict(model,features,occasion){if(!model||!Array.isArray(features)||features.length!==DIM)throw Error('Train your model first.');const exact=model.rows.filter(r=>r.occasion===occasion);const pool=exact.length>=3?exact:model.rows;const nearest=pool.map(r=>({...r,distance:distance(features,r.features)})).sort((a,b)=>a.distance-b.distance).slice(0,3);const weights=nearest.map(r=>1/(r.distance+.015)**2);const rating=nearest.reduce((s,r,i)=>s+r.rating*weights[i],0)/weights.reduce((a,b)=>a+b,0);return {rating:Math.round(rating*10)/10,nearest,matchedOccasion:exact.length>=3,distance:nearest[0].distance}}
+function evaluate(rows){if(rows.length<7)return null;let error=0;rows.forEach((r,i)=>{const m={rows:rows.filter((_,j)=>i!==j)};error+=Math.abs(predict(m,r.features,r.occasion).rating-r.rating)});return Math.round(error/rows.length*10)/10}
+// 4x6 grid of RGB means and luminance variation. Uses the central 70% to reduce background influence.
+function features(rgba,width,height){const result=[];for(let gy=0;gy<6;gy++)for(let gx=0;gx<4;gx++){let r=0,g=0,b=0,l=0,l2=0,n=0;const x0=Math.floor(width*(.15+.7*gx/4)),x1=Math.floor(width*(.15+.7*(gx+1)/4)),y0=Math.floor(height*gy/6),y1=Math.floor(height*(gy+1)/6);for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const i=(y*width+x)*4,R=rgba[i]/255,G=rgba[i+1]/255,B=rgba[i+2]/255,L=.2126*R+.7152*G+.0722*B;r+=R;g+=G;b+=B;l+=L;l2+=L*L;n++}result.push(r/n,g/n,b/n,Math.min(1,Math.sqrt(Math.max(0,l2/n-(l/n)**2))*2))}return result}
+const api={DIM,valid,distance,train,predict,evaluate,features};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.DaywearModel=api;
+})(typeof window==='undefined'?globalThis:window);
